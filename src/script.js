@@ -48,10 +48,9 @@ window.addEventListener('resize', () => {
  * Objects
  */
 // Road
-const geometry = new THREE.PlaneGeometry( 1, 5 );
-const material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+const geometry = new THREE.PlaneGeometry( .7, 10 );
+const material = new THREE.MeshBasicMaterial();
 const plane = new THREE.Mesh( geometry, material );
-material.wireframe = true
 plane.rotation.x = - Math.PI * .5    
 gui.add(plane.position, 'z').min(0).max(3).step(.01)
 
@@ -63,10 +62,26 @@ scene.add( plane );
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(0, .5, 3)
-gui.add(camera.position, 'z').min(-3).max(3).step(.01)
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100)
+camera.filmGauge = 40
+
+const cameraHeight = .5
+camera.position.set(0, cameraHeight, 4)
+gui.add(camera.position, 'z').min(-3).max(10).step(.01).name('camera z')
 scene.add(camera)
+
+const planeHeight = geometry.parameters.height
+const shift = camera.position.z - (plane.position.z + (planeHeight / 2))
+console.log(camera.position.z - (plane.position.z + (planeHeight / 2)));
+plane.position.z = plane.position.z + (shift - 1)
+
+
+// Ring
+const ringThickness = .1
+const ringGeometry = new THREE.RingGeometry(geometry.parameters.width, geometry.parameters.width + ringThickness, 32)
+const ringMaterial = new THREE.MeshBasicMaterial()
+const ring = new THREE.Mesh(ringGeometry, ringMaterial)
+scene.add(ring)
 
 // Controls
 // const controls = new OrbitControls(camera, canvas)
@@ -90,6 +105,7 @@ const tick = () => {
 
     // Update controls
     // controls.update()
+    // camera.position.z = camera.position.z - .001
 
     // Render
     renderer.render(scene, camera)
