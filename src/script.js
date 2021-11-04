@@ -20,7 +20,7 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 const axesHelper = new THREE.AxesHelper( 5 );
-scene.add( axesHelper );
+
 
 /**
  * Sizes
@@ -45,47 +45,78 @@ window.addEventListener('resize', () => {
 })
 
 /**
- * Objects
- */
-// Road
-const geometry = new THREE.PlaneGeometry( .7, 10 );
-const material = new THREE.MeshBasicMaterial();
-const plane = new THREE.Mesh( geometry, material );
-plane.rotation.x = - Math.PI * .5    
-gui.add(plane.position, 'z').min(0).max(3).step(.01)
-
-console.log(geometry);
-// plane.rotation.y = - Math.PI * .25
-scene.add( plane );
-
-/**
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100)
-camera.filmGauge = 40
-
-const cameraHeight = .5
-camera.position.set(0, cameraHeight, 4)
-gui.add(camera.position, 'z').min(-3).max(10).step(.01).name('camera z')
+const cameraParams = {
+    fov: 45, 
+    near: 0.1, 
+    far: 100,
+    // Camera 'looks down' at the road a little bit. 
+    rotationX: -.2,
+    height: 3,
+    z: 20
+}
+const camera = new THREE.PerspectiveCamera(cameraParams.fov, sizes.width / sizes.height, cameraParams.near, cameraParams.far)
+camera.rotation.x = cameraParams.rotationX
+camera.position.set(0, cameraParams.height, cameraParams.z)
+gui.add(camera.position, 'z').min(-3).max(20).step(.01).name('camera z')
 scene.add(camera)
 
-const planeHeight = geometry.parameters.height
-const shift = camera.position.z - (plane.position.z + (planeHeight / 2))
-console.log(camera.position.z - (plane.position.z + (planeHeight / 2)));
-plane.position.z = plane.position.z + (shift - 1)
+/**
+ * Lights
+ */
+// Ambient Light
+const ambientLight = new THREE.AmbientLight('#b9d5ff', 0.12)
+gui.add(ambientLight, 'intensity').min(0).max(1).step(0.001)
+scene.add(ambientLight)
+
+// Point light
+const light = new THREE.PointLight( 0xffffff, .40, 10 );
+gui.add(light, 'intensity').min(0).max(1).step(.001).name('point light intensity')
+gui.add(light, 'distance').min(0).max(10).step(.01)
+light.position.set(0, 4, 20)
+scene.add(light)
+
+const pointLightHelper = new THREE.PointLightHelper( light, 1)
+scene.add(pointLightHelper)
+
+/**
+ * Objects
+ */
+// Road
+const roadParams = {
+    width: 4, 
+    length: 100,
+    rotationX: - Math.PI * .5
+}
+const roadGeometry = new THREE.PlaneGeometry( roadParams.width, roadParams.length );
+const roadMaterial = new THREE.MeshStandardMaterial({ color: '#b9d5ff' })
+const road = new THREE.Mesh( roadGeometry, roadMaterial );
+road.rotation.x = roadParams.rotationX   
+scene.add( road );
+
+road.position.z = camera.position.z - (roadParams.length / 2)
+
+const testCube = new THREE.Mesh(
+    new THREE.BoxGeometry(),
+    new THREE.MeshBasicMaterial({ color: 'red' })
+)
+testCube.position.set(0, 4, 20)
+scene.add(testCube)
 
 
 // Ring
 const ringThickness = .1
-const ringGeometry = new THREE.RingGeometry(geometry.parameters.width, geometry.parameters.width + ringThickness, 32)
+const ringGeometry = new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 32)
 const ringMaterial = new THREE.MeshBasicMaterial()
 const ring = new THREE.Mesh(ringGeometry, ringMaterial)
 scene.add(ring)
 
 // Controls
-// const controls = new OrbitControls(camera, canvas)
-// controls.enableDamping = true
+const enableControls = false
+const controls = enableControls ? new OrbitControls(camera, canvas) : null
+if (controls) controls.enableDamping = true
 
 /**
  * Renderer
@@ -94,6 +125,7 @@ const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 })
 renderer.setSize(sizes.width, sizes.height)
+renderer.setClearColor('#19262e')
 
 
 /**
@@ -104,8 +136,9 @@ const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
     // Update controls
-    // controls.update()
-    // camera.position.z = camera.position.z - .001
+    if (controls) controls.update()
+    camera.position.z = camera.position.z - .01
+    light.position.z = light.position.z - .01
 
     // Render
     renderer.render(scene, camera)
