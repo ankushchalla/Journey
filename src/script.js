@@ -51,7 +51,7 @@ window.addEventListener('resize', () => {
 const cameraParams = {
     fov: 45, 
     near: 0.1, 
-    far: 100,
+    far: 300,
     // Camera 'looks down' at the road a little bit. 
     rotationX: -.2,
     height: 3,
@@ -105,6 +105,37 @@ const testCube = new THREE.Mesh(
 testCube.position.set(0, 4, 20)
 scene.add(testCube)
 
+// Stars
+const starGeometry = new THREE.BufferGeometry()
+const numberOfStars = 2000
+const starSize = .2
+const positions = new Float32Array(numberOfStars * 3)
+
+for (let i = 0; i < positions.length; i += 3) {
+    // xyz value for each vertex (position of particle in 3d space).
+    const randomNumber = Math.random() * Math.PI * 2
+    const amplitude = Math.random() * cameraParams.far * .5
+    const x = amplitude * Math.sin(randomNumber)
+    const y = amplitude * Math.cos(randomNumber)
+    const z = Math.random() * - roadParams.length
+    console.log(z);
+    positions[i] = x
+    positions[i + 1] = y
+    positions[i + 2] = z
+}
+
+starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+const starMaterial = new THREE.PointsMaterial({
+    size: starSize,
+    sizeAttenuation: true,
+    depthWrite: false,
+    // Remember, blending looks better, but costs more.
+    // blending: THREE.AdditiveBlending,
+})
+
+const stars = new THREE.Points(starGeometry, starMaterial)
+scene.add(stars)
+
 
 // Ring
 const ringThickness = .1
@@ -114,7 +145,7 @@ const ring = new THREE.Mesh(ringGeometry, ringMaterial)
 scene.add(ring)
 
 // Controls
-const enableControls = false
+const enableControls = true
 const controls = enableControls ? new OrbitControls(camera, canvas) : null
 if (controls) controls.enableDamping = true
 
@@ -127,6 +158,9 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setClearColor('#19262e')
 
+const fog = new THREE.Fog('#19262e', 1, 40)
+// scene.fog = fog
+
 
 /**
  * Animate
@@ -137,8 +171,8 @@ const tick = () => {
 
     // Update controls
     if (controls) controls.update()
-    camera.position.z = camera.position.z - .01
-    light.position.z = light.position.z - .01
+    // camera.position.z = camera.position.z - .01
+    // light.position.z = light.position.z - .01
 
     // Render
     renderer.render(scene, camera)
