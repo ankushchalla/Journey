@@ -81,6 +81,34 @@ window.addEventListener('mousemove', (event) => {
     
 })
 
+// Fullscreen
+window.addEventListener('dblclick', () => {
+    const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement
+
+    if(!fullscreenElement)
+    {
+        if(canvas.requestFullscreen)
+        {
+            canvas.requestFullscreen()
+        }
+        else if(canvas.webkitRequestFullscreen)
+        {
+            canvas.webkitRequestFullscreen()
+        }
+    }
+    else
+    {
+        if(document.exitFullscreen)
+        {
+            document.exitFullscreen()
+        }
+        else if(document.webkitExitFullscreen)
+        {
+            document.webkitExitFullscreen()
+        }
+    }
+})
+
 /**
  * Lights
  */
@@ -155,8 +183,9 @@ scene.add(stars)
 
 
 // Ring
-const ringThickness = .1
-const ringGeometry = new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 40)
+const ringThickness = .2
+const ringInnerRadius = roadGeometry.parameters.width + 3
+const ringGeometry = new THREE.RingGeometry(ringInnerRadius, ringInnerRadius + ringThickness, 40)
 const ringMaterial = new THREE.MeshBasicMaterial()
 let currentRing = new THREE.Mesh(ringGeometry, ringMaterial)
 currentRing.position.z = 40
@@ -182,7 +211,7 @@ renderer.setClearColor('#19262e')
 const clock = new THREE.Clock()
 let runAnimation = false
 
-const potentialThetaSegments = [3, 4, 5, 6, 8, 12, 24, 40]
+const potentialThetaSegments = [3, 4, 5, 6, 8, 40]
 const timeBetweenRings = 7
 
 let count = 0
@@ -203,7 +232,7 @@ const tick = () => {
         currentRing.geometry.dispose()
         const thetaSegments = potentialThetaSegments[Math.floor(Math.random() * potentialThetaSegments.length)]
         currentRing = new THREE.Mesh(
-            new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, thetaSegments),
+            new THREE.RingGeometry(ringInnerRadius, ringInnerRadius + ringThickness, thetaSegments),
             ringMaterial
         )
         currentRing.position.z = 20
@@ -211,6 +240,7 @@ const tick = () => {
         renderer.render(scene, camera)
     }
     if (runAnimation) currentRing.position.z = currentRing.position.z - .2
+    currentRing.rotation.z = currentRing.rotation.z - .005
 
     // Render
     renderer.render(scene, camera)
