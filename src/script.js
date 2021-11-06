@@ -21,6 +21,10 @@ const scene = new THREE.Scene()
 
 const axesHelper = new THREE.AxesHelper( 5 );
 
+// Textures
+const textureLoader = new THREE.TextureLoader()
+const starTexture = textureLoader.load('textures/particles/1.png')
+
 
 /**
  * Sizes
@@ -68,13 +72,11 @@ scene.add(camera)
  */
 // Ambient Light
 const ambientLight = new THREE.AmbientLight('#b9d5ff', 0.12)
-gui.add(ambientLight, 'intensity').min(0).max(1).step(0.001)
 scene.add(ambientLight)
 
 // Point light
 const light = new THREE.PointLight( 0xffffff, .40, 10 );
 gui.add(light, 'intensity').min(0).max(1).step(.001).name('point light intensity')
-gui.add(light, 'distance').min(0).max(10).step(.01)
 light.position.set(0, 4, 20)
 scene.add(light)
 
@@ -107,8 +109,8 @@ scene.add(testCube)
 
 // Stars
 const starGeometry = new THREE.BufferGeometry()
-const numberOfStars = 2000
-const starSize = .2
+const numberOfStars = 3000
+const starSize = .5
 const positions = new Float32Array(numberOfStars * 3)
 
 for (let i = 0; i < positions.length; i += 3) {
@@ -117,8 +119,7 @@ for (let i = 0; i < positions.length; i += 3) {
     const amplitude = Math.random() * cameraParams.far * .5
     const x = amplitude * Math.sin(randomNumber)
     const y = amplitude * Math.cos(randomNumber)
-    const z = Math.random() * - roadParams.length
-    console.log(z);
+    const z = Math.random() * - roadParams.length + 20
     positions[i] = x
     positions[i + 1] = y
     positions[i + 2] = z
@@ -128,6 +129,8 @@ starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
 const starMaterial = new THREE.PointsMaterial({
     size: starSize,
     sizeAttenuation: true,
+    transparent: true,
+    alphaMap: starTexture,
     depthWrite: false,
     // Remember, blending looks better, but costs more.
     // blending: THREE.AdditiveBlending,
@@ -142,7 +145,10 @@ const ringThickness = .1
 const ringGeometry = new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 32)
 const ringMaterial = new THREE.MeshBasicMaterial()
 const ring = new THREE.Mesh(ringGeometry, ringMaterial)
+ring.position.z = 20
+ring.name = 'current ring'
 scene.add(ring)
+let currentRing = null
 
 // Controls
 const enableControls = true
@@ -158,14 +164,40 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setClearColor('#19262e')
 
-const fog = new THREE.Fog('#19262e', 1, 40)
-// scene.fog = fog
-
-
 /**
  * Animate
  */
 const clock = new THREE.Clock()
+let runAnimation = false
+
+let count = 0
+const runRingAnimation = (elapsedTime, currentRing) => {
+    if (currentRing == null) {
+        currentRing = ring
+        scene.add(currentRing)
+    }
+    if (Math.floor(elapsedTime) % 5 === 0) {
+        runAnimation = true
+    }
+    if (currentRing.position.z < - roadParams.length) {
+        runAnimation = false
+        // currentRing.position.z = 30
+        scene.remove(currentRing)
+        currentRing.geometry.dispose()
+        const newRing = new THREE.Mesh(
+            new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 3),
+            new THREE.MeshBasicMaterial()
+        )
+        newRing.name = "current ring"
+        scene.add(newRing)
+        renderer.render(scene, camera)
+        currentRing = scene.children.find(child => child.name === "current ring")
+        console.log("theta segments:", scene.children[7].geometry.parameters.thetaSegments);
+        count++
+        if (count === 2) throw new Error()
+    }
+    if (runAnimation) currentRing.position.z = currentRing.position.z - .3
+}
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
@@ -173,6 +205,37 @@ const tick = () => {
     if (controls) controls.update()
     // camera.position.z = camera.position.z - .01
     // light.position.z = light.position.z - .01
+
+    // stars.rotation.z = elapsedTime * .1
+    // ring.position.z -= elapsedTime * .1
+    // console.log(elapsedTime);
+    
+    if (currentRing == null) {
+        currentRing = ring
+        scene.add(currentRing)
+    }
+    if (Math.floor(elapsedTime) % 5 === 0) {
+        runAnimation = true
+    }
+    if (currentRing.position.z < - roadParams.length) {
+        runAnimation = false
+        // currentRing.position.z = 30
+        scene.remove(currentRing)
+        currentRing.geometry.dispose()
+        const newRing = new THREE.Mesh(
+            new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 3),
+            new THREE.MeshBasicMaterial()
+        )
+        newRing.name = "current ring"
+        newRing.position.z = 20
+        scene.add(newRing)
+        renderer.render(scene, camera)
+        currentRing = scene.children.find(child => child.name === "current ring")
+        console.log("theta segments:", scene.children[7].geometry.parameters.thetaSegments);
+        count++
+        if (count === 2) throw new Error()
+    }
+    if (runAnimation) currentRing.position.z = currentRing.position.z - .3
 
     // Render
     renderer.render(scene, camera)
