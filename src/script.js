@@ -67,6 +67,20 @@ camera.position.set(0, cameraParams.height, cameraParams.z)
 gui.add(camera.position, 'z').min(-3).max(20).step(.01).name('camera z')
 scene.add(camera)
 
+window.addEventListener('keydown', (event) => {
+    if (event.key === "ArrowUp" || event.key === "w") camera.position.z = camera.position.z - .05
+    if (event.key === "ArrowDown" || event.key === "s") camera.position.z = camera.position.z + .05
+})
+
+window.addEventListener('mousemove', (event) => {
+    const x = event.clientX - (sizes.width / 2)
+    const y = - (event.clientY - (sizes.height / 2))
+    camera.rotation.y = - (x * .001)
+    camera.rotation.x = y * .001
+    // camera.lookAt(x, y, camera.position.z + 5)
+    
+})
+
 /**
  * Lights
  */
@@ -142,14 +156,14 @@ scene.add(stars)
 
 // Ring
 const ringThickness = .1
-const ringGeometry = new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 32)
+const ringGeometry = new THREE.RingGeometry(roadGeometry.parameters.width, roadGeometry.parameters.width + ringThickness, 40)
 const ringMaterial = new THREE.MeshBasicMaterial()
 let currentRing = new THREE.Mesh(ringGeometry, ringMaterial)
 currentRing.position.z = 40
 scene.add(currentRing)
 
 // Controls
-const enableControls = true
+const enableControls = false
 const controls = enableControls ? new OrbitControls(camera, canvas) : null
 if (controls) controls.enableDamping = true
 
@@ -168,7 +182,8 @@ renderer.setClearColor('#19262e')
 const clock = new THREE.Clock()
 let runAnimation = false
 
-const potentialThetaSegments = [3, 4, 6, 8, 12, 24, 40]
+const potentialThetaSegments = [3, 4, 5, 6, 8, 12, 24, 40]
+const timeBetweenRings = 7
 
 let count = 0
 const tick = () => {
@@ -176,13 +191,10 @@ const tick = () => {
 
     // Update controls
     if (controls) controls.update()
-    // camera.position.z = camera.position.z - .01
-    // light.position.z = light.position.z - .01
 
     stars.rotation.z = elapsedTime * .1
-    // console.log(elapsedTime);
     
-    if (Math.floor(elapsedTime) % 5 === 0) {
+    if (Math.floor(elapsedTime) % timeBetweenRings === 0) {
         runAnimation = true
     }
     if (currentRing.position.z < - roadParams.length) {
@@ -198,7 +210,7 @@ const tick = () => {
         scene.add(currentRing)
         renderer.render(scene, camera)
     }
-    if (runAnimation) currentRing.position.z = currentRing.position.z - .3
+    if (runAnimation) currentRing.position.z = currentRing.position.z - .2
 
     // Render
     renderer.render(scene, camera)
