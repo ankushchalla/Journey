@@ -67,9 +67,10 @@ camera.position.set(0, cameraParams.height, cameraParams.z)
 gui.add(camera.position, 'z').min(-3).max(20).step(.01).name('camera z')
 scene.add(camera)
 
+const walkSpeed = .06
 window.addEventListener('keydown', (event) => {
-    if (event.key === "ArrowUp" || event.key === "w") camera.position.z = camera.position.z - .05
-    if (event.key === "ArrowDown" || event.key === "s") camera.position.z = camera.position.z + .05
+    if (event.key === "ArrowUp" || event.key === "w") camera.position.z = camera.position.z - walkSpeed
+    if (event.key === "ArrowDown" || event.key === "s") camera.position.z = camera.position.z + walkSpeed
 })
 
 window.addEventListener('mousemove', (event) => {
