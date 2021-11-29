@@ -2,13 +2,6 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
-import CANNON, { Vec3 } from 'cannon'
-
-/**
- * Debug
- */
-const gui = new dat.GUI()
-
 
 /**
  * Base
@@ -64,7 +57,6 @@ const cameraParams = {
 const camera = new THREE.PerspectiveCamera(cameraParams.fov, sizes.width / sizes.height, cameraParams.near, cameraParams.far)
 camera.rotation.x = cameraParams.rotationX
 camera.position.set(0, cameraParams.height, cameraParams.z)
-gui.add(camera.position, 'z').min(-3).max(20).step(.01).name('camera z')
 scene.add(camera)
 
 const walkSpeed = .06
@@ -78,8 +70,6 @@ window.addEventListener('mousemove', (event) => {
     const y = - (event.clientY - (sizes.height / 2))
     camera.rotation.y = - (x * .001)
     camera.rotation.x = y * .001
-    // camera.lookAt(x, y, camera.position.z + 5)
-    
 })
 
 // Fullscreen
@@ -119,12 +109,10 @@ scene.add(ambientLight)
 
 // Point light
 const light = new THREE.PointLight( 0xffffff, .40, 10 );
-gui.add(light, 'intensity').min(0).max(1).step(.001).name('point light intensity')
 light.position.set(0, 4, 20)
 scene.add(light)
 
 const pointLightHelper = new THREE.PointLightHelper( light, 1)
-scene.add(pointLightHelper)
 
 /**
  * Objects
@@ -148,7 +136,6 @@ const testCube = new THREE.Mesh(
     new THREE.MeshBasicMaterial({ color: 'red' })
 )
 testCube.position.set(0, 4, 20)
-scene.add(testCube)
 
 // Stars
 const starGeometry = new THREE.BufferGeometry()
@@ -187,7 +174,7 @@ scene.add(stars)
 const ringThickness = .2
 const ringInnerRadius = roadGeometry.parameters.width + 3
 const ringGeometry = new THREE.RingGeometry(ringInnerRadius, ringInnerRadius + ringThickness, 40)
-const ringMaterial = new THREE.MeshBasicMaterial()
+const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xe89535 })
 let currentRing = new THREE.Mesh(ringGeometry, ringMaterial)
 currentRing.position.z = 40
 scene.add(currentRing)
@@ -215,7 +202,6 @@ let runAnimation = false
 const potentialThetaSegments = [3, 4, 5, 6, 8, 40]
 const timeBetweenRings = 7
 
-let count = 0
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
 
@@ -227,10 +213,12 @@ const tick = () => {
     if (Math.floor(elapsedTime) % timeBetweenRings === 0) {
         runAnimation = true
     }
+    // Dispose old ring when it reaches end of road.
     if (currentRing.position.z < - roadParams.length) {
         runAnimation = false
         scene.remove(currentRing)
         currentRing.geometry.dispose()
+        // Create new ring with random choice of theta segments. 
         const thetaSegments = potentialThetaSegments[Math.floor(Math.random() * potentialThetaSegments.length)]
         currentRing = new THREE.Mesh(
             new THREE.RingGeometry(ringInnerRadius, ringInnerRadius + ringThickness, thetaSegments),
